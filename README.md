@@ -11,7 +11,7 @@ you log in to your websites **once, by hand**, through noVNC over Tailscale, and
 
 [![shellcheck](https://github.com/AndreaAcanfora/claude-cloud-browser/actions/workflows/shellcheck.yml/badge.svg)](https://github.com/AndreaAcanfora/claude-cloud-browser/actions/workflows/shellcheck.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Donate with PayPal](https://img.shields.io/badge/donate-PayPal-00457C?logo=paypal)](PAYPAL_LINK)
+[![Donate with PayPal](https://img.shields.io/badge/donate-PayPal-00457C?logo=paypal)](https://www.paypal.com/paypalme/AndreaAca)
 
 </div>
 
@@ -197,7 +197,7 @@ Issues and pull requests are welcome, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Support
 
-If this saves you time, you can [buy me a coffee on PayPal](PAYPAL_LINK). Thank you!
+If this saves you time, you can [buy me a coffee on PayPal](https://www.paypal.com/paypalme/AndreaAca). Thank you!
 
 ## License
 
