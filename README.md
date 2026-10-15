@@ -25,6 +25,7 @@ you log in to your websites **once, by hand**, through noVNC over Tailscale, and
 - **See and touch the browser from your phone** with noVNC, published only on your private Tailscale network. Solve a captcha, approve a 2FA prompt, log in to a site, then hand it back to Claude.
 - **Locked down by default:** key-only SSH, ufw, fail2ban, unattended security upgrades, no public port besides SSH, and a resource cap so the browser can never starve the server.
 - **Built for flaky phone connections:** every SSH login lands in the same tmux session, so a running Claude survives Termius being suspended and is right there when you reconnect.
+- **Terminal or app, your choice:** use Claude from Termius over SSH, or from the **Claude app** with [Remote Control](docs/getting-started.md#8-optional-use-claude-from-the-claude-app-remote-control).
 - **`cb`**, a small helper: `cb status`, `cb browser`, `cb restart`, `cb logs`.
 
 ## Demo
@@ -80,31 +81,30 @@ Nothing listens on a public interface except SSH. The DevTools port, VNC and noV
 and an nftables rule rejects local connections to them from any other user on the machine.
 noVNC reaches your phone only through `tailscale serve`, inside your own tailnet.
 
-## Quickstart from your phone (Termius, 5 steps)
+## Quickstart
 
-You need: a fresh **Ubuntu 24.04** server (tested on Hetzner CAX21, 4 vCPU / 8 GB, ARM64; 2 vCPU / 4 GB works for light use),
-a [Tailscale](https://tailscale.com) account (free plan is fine) and a Claude subscription.
+> **New to this?** Follow the full **[step-by-step guide](docs/getting-started.md)**: it assumes no Linux experience
+> and covers every tap, from creating the server to the first login in the browser.
 
-1. **Create a key in Termius.** Keychain → Generate Key → ED25519. Copy the public key (`ssh-ed25519 AAAA...`).
-2. **Create the server** with your Termius key, and paste this as cloud-init "user data" (or run the commands as root over SSH):
+The short version:
 
-   ```bash
-   git clone https://github.com/AndreaAcanfora/claude-cloud-browser /opt/claude-cloud-browser
-   CB_SSH_PUBKEY='ssh-ed25519 AAAA... termius' bash /opt/claude-cloud-browser/install.sh
-   ```
+| # | Step | Where |
+|---|---|---|
+| 1 | Create an **ED25519 key** in Termius and copy the public key | Phone |
+| 2 | Create an **Ubuntu 24.04** server (Hetzner CAX21 recommended) with that key and the [cloud-init file](cloud-init/user-data.yaml) as user data. It installs itself in 5 to 10 minutes | Hetzner console |
+| 3 | As `root`: `tailscale up --hostname=claude-vps`, approve the link, then `bash /opt/claude-cloud-browser/install.sh --only tailscale` | Termius |
+| 4 | As `claude`: run `claude` and log in with **your** Claude account | Termius |
+| 5 | `cb browser`, open the address on the phone (Tailscale on), log in to your websites once | Phone browser |
+| 6 | Optional: `claude remote-control` to chat with it from the **Claude app** | Termius, then Claude app |
 
-   A ready-made [`cloud-init/user-data.yaml`](cloud-init/user-data.yaml) is included.
-3. **Join your tailnet.** Install Tailscale on the phone and log in. On the server, as root:
+Already have a server? As root:
 
-   ```bash
-   tailscale up --hostname=claude-vps
-   bash /opt/claude-cloud-browser/install.sh --only tailscale   # publishes noVNC on the tailnet
-   ```
+```bash
+git clone https://github.com/AndreaAcanfora/claude-cloud-browser /opt/claude-cloud-browser
+CB_SSH_PUBKEY='ssh-ed25519 AAAA... your-key' bash /opt/claude-cloud-browser/install.sh
+```
 
-4. **Log in to Claude.** In Termius connect as `claude@<server-ip>`, run `claude` and follow the login link
-   (it opens fine on the phone). This is your own account, nothing is stored by the installer.
-5. **Log in to your sites once.** Run `cb browser`, open the URL it prints on the phone, enter the VNC password it shows,
-   and sign in to the websites you want Claude to use. From now on just ask Claude.
+then continue from step 3. Details in [Installing on a server you already have](docs/getting-started.md#11-installing-on-a-server-you-already-have).
 
 ## Commands
 
@@ -114,6 +114,7 @@ a [Tailscale](https://tailscale.com) account (free plan is fine) and a Claude su
 | `cb browser` | noVNC URL for your phone and the VNC password |
 | `cb restart [xvfb\|chrome\|x11vnc\|novnc]` | Restart everything, or one service |
 | `cb logs [name] [-f]` | Recent logs, of everything or of one service |
+| `claude remote-control` | Use this Claude from the Claude app / claude.ai/code (run it inside tmux) |
 | `Ctrl-b d` | Detach from tmux (Claude keeps running; next login reattaches). `touch ~/.no-tmux` disables auto-attach |
 | `sudo bash install.sh --only <step>` | Re-run one step: `system firewall ssh claude shell browser mcp novnc tailscale cb` |
 
