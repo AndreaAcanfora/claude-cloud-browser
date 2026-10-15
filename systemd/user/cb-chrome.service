@@ -1,0 +1,28 @@
+[Unit]
+Description=claude-cloud-browser: always-on browser (DevTools on 127.0.0.1:@CB_CDP_PORT@)
+After=cb-xvfb.service
+Requires=cb-xvfb.service
+
+[Service]
+Environment=DISPLAY=@CB_DISPLAY@
+Environment=XAUTHORITY=@CB_HOME@/.Xauthority
+# The profile in --user-data-dir keeps cookies and logins across restarts.
+# Playwright MCP attaches to this same browser through the DevTools port.
+ExecStart=@CB_HOME@/.local/bin/cb-browser \
+  --user-data-dir=@CB_HOME@/.config/cb-chrome \
+  --remote-debugging-address=127.0.0.1 \
+  --remote-debugging-port=@CB_CDP_PORT@ \
+  --no-first-run \
+  --no-default-browser-check \
+  --password-store=basic \
+  --disable-dev-shm-usage \
+  --window-position=0,0 \
+  --window-size=@CB_WINDOW_SIZE@ \
+  about:blank
+Restart=always
+RestartSec=3
+# Chrome forks many processes; give it time to close cleanly so the profile is not corrupted.
+TimeoutStopSec=20
+
+[Install]
+WantedBy=default.target

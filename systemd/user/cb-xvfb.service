@@ -1,0 +1,11 @@
+[Unit]
+Description=claude-cloud-browser: virtual display @CB_DISPLAY@
+
+[Service]
+# -auth: only clients with the user's X cookie may connect. -nolisten tcp: no network display.
+ExecStart=/usr/bin/Xvfb @CB_DISPLAY@ -screen 0 @CB_SCREEN@ -nolisten tcp -auth @CB_HOME@/.Xauthority
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=default.target
