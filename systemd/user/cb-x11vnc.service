@@ -1,0 +1,14 @@
+[Unit]
+Description=claude-cloud-browser: VNC server for the browser display (127.0.0.1:@CB_VNC_PORT@)
+After=cb-xvfb.service
+Requires=cb-xvfb.service
+
+[Service]
+ExecStart=/usr/bin/x11vnc -display @CB_DISPLAY@ -auth @CB_HOME@/.Xauthority \
+  -rfbauth @CB_HOME@/.vnc/passwd -localhost -rfbport @CB_VNC_PORT@ \
+  -forever -shared -noxdamage -quiet
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=default.target

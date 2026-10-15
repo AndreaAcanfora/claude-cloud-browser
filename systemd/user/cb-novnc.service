@@ -1,0 +1,12 @@
+[Unit]
+Description=claude-cloud-browser: noVNC web client (127.0.0.1:@CB_NOVNC_PORT@, published only on Tailscale)
+After=cb-x11vnc.service
+Requires=cb-x11vnc.service
+
+[Service]
+ExecStart=/usr/bin/websockify --web /usr/share/novnc 127.0.0.1:@CB_NOVNC_PORT@ 127.0.0.1:@CB_VNC_PORT@
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=default.target

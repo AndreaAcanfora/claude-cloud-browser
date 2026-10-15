@@ -1,0 +1,13 @@
+[Unit]
+Description=claude-cloud-browser: only @CB_USER@ and root may reach the browser's local ports
+After=nftables.service network-pre.target
+Before=network.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/sbin/nft -f /etc/claude-cloud-browser/guard.nft
+ExecStop=/usr/sbin/nft delete table inet claude_cloud_browser
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,16 @@
+# Managed by claude-cloud-browser.
+# 127.0.0.1 is shared by every local user. Without this, any other account on
+# the server (a web app, a compromised service) could attach to the DevTools
+# port and take over the logged-in browser, or open the VNC port.
+# Only the browser's own user and root (tailscaled runs as root) may connect.
+
+# Create then delete, so loading this file twice is safe.
+table inet claude_cloud_browser
+delete table inet claude_cloud_browser
+
+table inet claude_cloud_browser {
+  chain output {
+    type filter hook output priority 0; policy accept;
+    oifname "lo" tcp dport { @CB_CDP_PORT@, @CB_VNC_PORT@, @CB_NOVNC_PORT@ } meta skuid != { 0, @CB_UID@ } reject with tcp reset
+  }
+}
