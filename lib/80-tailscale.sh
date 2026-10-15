@@ -33,7 +33,15 @@ step_tailscale() {
     jq -e --arg t "$target" '[.. | .Proxy? // empty] | index($t)' >/dev/null; then
     ok "noVNC already published on the tailnet"
   else
-    tailscale serve --bg --https="$CB_TS_HTTPS_PORT" "$target" >/dev/null
-    ok "noVNC published on the tailnet (HTTPS port $CB_TS_HTTPS_PORT)"
+    # On a new tailnet, serve waits forever for the admin to enable HTTPS:
+    # bound it and show Tailscale's message (it contains the enable link).
+    local out
+    if out=$(timeout 30 tailscale serve --bg --https="$CB_TS_HTTPS_PORT" "$target" 2>&1); then
+      ok "noVNC published on the tailnet (HTTPS port $CB_TS_HTTPS_PORT)"
+    else
+      warn "tailscale serve did not complete:"
+      printf '%s\n' "$out" >&2
+      warn "enable it with the link above, then re-run: sudo bash install.sh --only tailscale"
+    fi
   fi
 }
