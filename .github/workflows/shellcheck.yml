@@ -11,4 +11,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Run shellcheck
-        run: shellcheck -x install.sh lib/*.sh bin/cb
+        run: shellcheck -x install.sh lib/*.sh bin/cb bin/cb-rc-ready

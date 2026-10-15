@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Exit 0 when Claude Code Remote Control can start: you are logged in to Claude
+# and you accepted the trust dialog for ~/workspace. Used as ExecCondition by
+# cb-remote-control.service, so the unit is skipped (not crash-looped) until then.
+set -euo pipefail
+test -s "$HOME/.claude/.credentials.json"
+jq -e --arg d "$HOME/workspace" '.projects[$d].hasTrustDialogAccepted == true' "$HOME/.claude.json" >/dev/null

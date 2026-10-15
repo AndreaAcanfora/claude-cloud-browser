@@ -14,7 +14,7 @@ Thanks for helping! A few rules keep the installer safe to re-run on real server
 ## Workflow
 
 1. Fork and create a branch.
-2. Run `shellcheck -x install.sh lib/*.sh bin/cb` (CI runs the same).
+2. Run `shellcheck -x install.sh lib/*.sh bin/cb bin/cb-rc-ready` (CI runs the same).
 3. Test on a throwaway Ubuntu 24.04 server: run `install.sh` twice, the second run must change nothing, then `cb status`.
 4. Open a pull request describing what you changed and how you tested it (architecture, provider).
 

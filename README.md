@@ -25,7 +25,7 @@ you log in to your websites **once, by hand**, through noVNC over Tailscale, and
 - **See and touch the browser from your phone** with noVNC, published only on your private Tailscale network. Solve a captcha, approve a 2FA prompt, log in to a site, then hand it back to Claude.
 - **Locked down by default:** key-only SSH, ufw, fail2ban, unattended security upgrades, no public port besides SSH, and a resource cap so the browser can never starve the server.
 - **Built for flaky phone connections:** every SSH login lands in the same tmux session, so a running Claude survives Termius being suspended and is right there when you reconnect.
-- **Terminal or app, your choice:** use Claude from Termius over SSH, or from the **Claude app** with [Remote Control](docs/getting-started.md#8-optional-use-claude-from-the-claude-app-remote-control).
+- **Terminal or app, your choice:** use Claude from Termius over SSH, or from the **Claude app** with [Remote Control](docs/getting-started.md#8-optional-use-claude-from-the-claude-app-remote-control), which runs as an always-on service.
 - **`cb`**, a small helper: `cb status`, `cb browser`, `cb restart`, `cb logs`.
 
 ## Demo
@@ -95,7 +95,7 @@ The short version:
 | 3 | As `root`: `tailscale up --hostname=claude-vps`, approve the link, then `bash /opt/claude-cloud-browser/install.sh --only tailscale` | Termius |
 | 4 | As `claude`: run `claude` and log in with **your** Claude account | Termius |
 | 5 | `cb browser`, open the address on the phone (Tailscale on), log in to your websites once | Phone browser |
-| 6 | Optional: `claude remote-control` to chat with it from the **Claude app** | Termius, then Claude app |
+| 6 | Optional: `cd ~/workspace && claude`, trust the folder, `/exit`, then `cb restart remote`: chat with it from the **Claude app** | Termius, then Claude app |
 
 Already have a server? As root:
 
@@ -112,11 +112,11 @@ then continue from step 3. Details in [Installing on a server you already have](
 |---|---|
 | `cb status` | Services, DevTools endpoint, Tailscale state, memory used vs cap, Claude Code version |
 | `cb browser` | noVNC URL for your phone and the VNC password |
-| `cb restart [xvfb\|chrome\|x11vnc\|novnc]` | Restart everything, or one service |
+| `cb restart [xvfb\|chrome\|x11vnc\|novnc\|remote]` | Restart everything, or one service |
 | `cb logs [name] [-f]` | Recent logs, of everything or of one service |
-| `claude remote-control` | Use this Claude from the Claude app / claude.ai/code (run it inside tmux) |
+| `cb restart remote` | (Re)start the always-on Remote Control service, to use this Claude from the Claude app |
 | `Ctrl-b d` | Detach from tmux (Claude keeps running; next login reattaches). `touch ~/.no-tmux` disables auto-attach |
-| `sudo bash install.sh --only <step>` | Re-run one step: `system firewall ssh claude shell browser mcp novnc tailscale cb` |
+| `sudo bash install.sh --only <step>` | Re-run one step: `system firewall ssh claude shell browser mcp novnc tailscale remote cb` |
 
 ## Configuration
 
@@ -133,6 +133,7 @@ or in `/etc/claude-cloud-browser/install.env` (handy for cloud-init). See [`.env
 | `CB_MEMORY_MAX` / `CB_CPU_QUOTA` | `3G` / `200%` | Cap for everything the user runs |
 | `CB_TS_HOSTNAME` / `CB_TS_HTTPS_PORT` | `claude-vps` / `443` | Tailscale name and HTTPS port for noVNC |
 | `CB_PLAYWRIGHT_VERSION` / `CB_PLAYWRIGHT_MCP_VERSION` | pinned | Browser build (ARM64) and MCP server versions |
+| `CB_RC_NAME` / `CB_RC_PERMISSION_MODE` | `CB_TS_HOSTNAME` / `default` | Remote Control session name and permission mode |
 
 ## Security
 

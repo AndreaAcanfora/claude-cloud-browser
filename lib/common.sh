@@ -101,6 +101,8 @@ render() {
       -e "s|@CB_NOVNC_PORT@|$CB_NOVNC_PORT|g" \
       -e "s|@CB_MEMORY_MAX@|$CB_MEMORY_MAX|g" \
       -e "s|@CB_CPU_QUOTA@|$CB_CPU_QUOTA|g" \
+      -e "s|@CB_RC_NAME@|$CB_RC_NAME|g" \
+      -e "s|@CB_RC_PERMISSION_MODE@|$CB_RC_PERMISSION_MODE|g" \
       "$1"
 }
 

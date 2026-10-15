@@ -1,0 +1,21 @@
+[Unit]
+Description=claude-cloud-browser: Claude Code Remote Control (use this Claude from the Claude app)
+After=cb-chrome.service network-online.target
+Wants=cb-chrome.service
+
+[Service]
+WorkingDirectory=@CB_HOME@/workspace
+Environment=PATH=@CB_HOME@/.local/bin:@CB_HOME@/.local/npm/bin:@CB_HOME@/.local/node/bin:/usr/local/bin:/usr/bin:/bin
+# Start only after you logged in to Claude and accepted the trust dialog for the
+# workspace yourself. Otherwise the unit is skipped cleanly instead of crash-looping.
+ExecCondition=@CB_HOME@/.local/bin/cb-rc-ready
+ExecStart=@CB_HOME@/.local/npm/bin/claude remote-control --name @CB_RC_NAME@ --permission-mode @CB_RC_PERMISSION_MODE@
+Restart=always
+RestartSec=10
+# Without a terminal, Remote Control redraws its status screen several times per
+# second (~270k journal lines a day). Keep errors only; the session is in the app.
+StandardOutput=null
+StandardError=journal
+
+[Install]
+WantedBy=default.target

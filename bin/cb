@@ -3,7 +3,7 @@
 #
 #   cb status            services, browser endpoint, Tailscale, resource use
 #   cb browser           the noVNC URL to open on your phone (+ VNC password)
-#   cb restart [name]    restart everything, or one of: xvfb chrome x11vnc novnc
+#   cb restart [name]    restart everything, or one of: xvfb chrome x11vnc novnc remote
 #   cb logs [name] [-f]  recent logs, of everything or of one service
 #
 # Works as the dedicated user or as root (root re-runs it as that user).
@@ -14,7 +14,7 @@ set -euo pipefail
 [[ -f /etc/claude-cloud-browser/cb.conf ]] && . /etc/claude-cloud-browser/cb.conf
 : "${CB_USER:=claude}" "${CB_CDP_PORT:=9222}" "${CB_NOVNC_PORT:=6080}" "${CB_TS_HTTPS_PORT:=443}"
 
-UNITS=(cb-xvfb cb-chrome cb-x11vnc cb-novnc)
+UNITS=(cb-xvfb cb-chrome cb-x11vnc cb-novnc cb-remote-control)
 
 if [[ $(id -un) != "$CB_USER" ]]; then
   [[ $EUID -eq 0 ]] || { echo "cb: run as $CB_USER or root" >&2; exit 1; }
@@ -31,8 +31,9 @@ red()   { printf '\033[31m%s\033[0m' "$*"; }
 unit_name() {
   case ${1:-} in
     xvfb|chrome|x11vnc|novnc) echo "cb-$1" ;;
+    remote|rc|remote-control) echo cb-remote-control ;;
     cb-*) echo "$1" ;;
-    *) echo "cb: unknown service '$1' (xvfb, chrome, x11vnc, novnc)" >&2; exit 1 ;;
+    *) echo "cb: unknown service '$1' (xvfb, chrome, x11vnc, novnc, remote)" >&2; exit 1 ;;
   esac
 }
 
@@ -52,12 +53,14 @@ cmd_status() {
   echo "Services"
   for u in "${UNITS[@]}"; do
     state=$(systemctl --user is-active "$u" 2>/dev/null || true)
-    if [[ $state == active ]]; then printf '  %-10s %s\n' "$u" "$(green active)"
-    else printf '  %-10s %s\n' "$u" "$(red "${state:-unknown}")"; fi
+    if [[ $state == active ]]; then printf '  %-17s %s\n' "$u" "$(green active)"
+    elif [[ $u == cb-remote-control ]]; then
+      printf '  %-17s %s\n' "$u" "$(red "${state:-inactive}") (needs: claude login + trust ~/workspace, see docs)"
+    else printf '  %-17s %s\n' "$u" "$(red "${state:-unknown}")"; fi
   done
   state=$(systemctl is-active cb-guard 2>/dev/null || true)
-  if [[ $state == active ]]; then printf '  %-10s %s\n' cb-guard "$(green active)"
-  else printf '  %-10s %s\n' cb-guard "$(red "${state:-unknown}")"; fi
+  if [[ $state == active ]]; then printf '  %-17s %s\n' cb-guard "$(green active)"
+  else printf '  %-17s %s\n' cb-guard "$(red "${state:-unknown}")"; fi
 
   echo "Browser"
   local version

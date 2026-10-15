@@ -8,6 +8,7 @@
 | `cb-chrome` | `claude` | DevTools `127.0.0.1:9222` | user systemd, after `cb-xvfb` |
 | `cb-x11vnc` | `claude` | `127.0.0.1:5900` | user systemd, after `cb-xvfb` |
 | `cb-novnc` (websockify + noVNC) | `claude` | `127.0.0.1:6080` | user systemd, after `cb-x11vnc` |
+| `cb-remote-control` | `claude` | outbound only (Anthropic) | user systemd, after `cb-chrome`; skipped until logged in + `~/workspace` trusted |
 | `cb-guard` | root (system unit) | nftables table `inet claude_cloud_browser` | system systemd |
 | `tailscaled` + `tailscale serve` | root | tailnet HTTPS → `127.0.0.1:6080` | system systemd |
 | Claude Code + Playwright MCP | `claude` | stdio | you, over SSH |
@@ -37,6 +38,7 @@ restarted only when their unit changed. `--only <step,...>` re-runs selected ste
 | `mcp` | Playwright MCP registered in Claude Code (user scope) with `--cdp-endpoint` |
 | `novnc` | VNC password, nftables port guard, x11vnc + noVNC units |
 | `tailscale` | official package; once you ran `tailscale up`: operator + `tailscale serve` |
+| `remote` | `~/workspace` + `CLAUDE.md`, always-on Remote Control unit (waits for your login and trust) |
 | `cb` | `/usr/local/bin/cb` and its config |
 
 ## Separation from provisioning

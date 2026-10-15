@@ -155,29 +155,46 @@ You can come back here whenever a site asks for a captcha or a 2FA code. Pinch t
 ## 8. Optional: use Claude from the Claude app (Remote Control)
 
 Instead of the terminal, you can talk to the Claude on your server from the **Claude app** (Code section) or from
-[claude.ai/code](https://claude.ai/code), with the same browser and tools.
+[claude.ai/code](https://claude.ai/code), with the same browser and tools. The installer sets this up as an
+**always-on service** (`cb-remote-control`): it restarts by itself and survives reboots, so after this step you
+don't need Termius for everyday use.
 
-1. Connect with the **claude** host in Termius (you are inside tmux).
-2. Run:
+The service needs two things that only you can do, once:
+
+1. **You are logged in to Claude** (step 6).
+2. **You trust the workspace folder.** Claude Code refuses to run Remote Control in a home directory, so the installer
+   created `~/workspace` (with a `CLAUDE.md` that tells Claude about the browser). In Termius, as `claude`:
 
    ```bash
-   claude remote-control
+   cd ~/workspace
+   claude
    ```
 
-3. In the Claude app, open **Code**: the session from your server appears there (named after the server). Open it and chat.
-4. Detach from tmux with `Ctrl-b` then `d`. Remote Control **keeps running** on the server even when Termius is closed.
+   Claude asks whether you trust this folder. The highlighted answer is **No, exit**: press the down arrow to
+   **Yes, I trust this folder**, then Enter. If it then offers other options (for example a new renderer), pick what you like.
+   Then type `/exit`.
+3. Start the service:
 
-If the server reboots, connect once and run `claude remote-control` again (or `claude remote-control --continue` to resume the last session).
+   ```bash
+   cb restart remote
+   cb status        # cb-remote-control should be "active"
+   ```
+
+4. In the Claude app, open **Code**: a session named `claude-vps` (your `CB_TS_HOSTNAME`) appears. Open it and chat.
+
+Every tool use asks for your approval in the app by default. To change that, set `CB_RC_PERMISSION_MODE`
+(for example `acceptEdits`) and re-run `install.sh --only remote`. If the service restarts, a new session appears in the app.
 
 ## 9. Everyday use
 
 | You want to | Do this |
 |---|---|
 | Talk to Claude from the terminal | Termius → **claude** host. You are back in the same tmux session, Claude included |
-| Talk to Claude from the Claude app | Remote Control, see step 8 |
+| Talk to Claude from the Claude app | Open the `claude-vps` session in the app's Code section (step 8) |
 | See or use the browser | `cb browser`, open the address with Tailscale on |
 | Check that everything runs | `cb status` |
 | Restart the browser | `cb restart chrome` (or `cb restart` for everything) |
+| Restart Remote Control | `cb restart remote` |
 | Read logs | `cb logs chrome`, `cb logs -f` to follow |
 | Leave Claude running and close Termius | `Ctrl-b` then `d` |
 | New terminal window next to Claude | `Ctrl-b` then `c`; switch with `Ctrl-b` then `n` / `p` |
@@ -202,6 +219,7 @@ The installer is safe to re-run: it only changes what is out of date.
 | The noVNC address does not open | The Tailscale app on the phone must be on and logged in to the same account as the server |
 | noVNC shows a black screen | Wait a few seconds; if it stays black, `cb restart` |
 | `cb status` shows a service not active | `cb logs <name>` to see why, then `cb restart <name>` |
+| `cb-remote-control` is inactive | You are not logged in to Claude or did not trust `~/workspace`: see step 8. Details: `cb logs remote` |
 | Claude does not list **playwright** in `/mcp` | As root: `bash /opt/claude-cloud-browser/install.sh --only browser,mcp` |
 | A site logs you out or shows a captcha | Open the browser with `cb browser` and solve it by hand, then ask Claude to continue |
 
