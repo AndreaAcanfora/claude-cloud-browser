@@ -32,6 +32,7 @@ restarted only when their unit changed. `--only <step,...>` re-runs selected ste
 | `firewall` | ufw: SSH only on a fresh server, additive on a server that already has rules |
 | `ssh` | user's `authorized_keys`, key-only sshd drop-in with lockout protection |
 | `claude` | per-user Node LTS (system Node untouched) + Claude Code from npm |
+| `shell` | tmux + auto-attach of interactive SSH logins to session `main` (opt out with `~/.no-tmux`) |
 | `browser` | Chrome (x86-64) or Playwright Chromium + AppArmor profile (ARM64), X cookie, resource cap, Xvfb + Chrome units |
 | `mcp` | Playwright MCP registered in Claude Code (user scope) with `--cdp-endpoint` |
 | `novnc` | VNC password, nftables port guard, x11vnc + noVNC units |

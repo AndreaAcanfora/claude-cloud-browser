@@ -24,6 +24,7 @@ you log in to your websites **once, by hand**, through noVNC over Tailscale, and
 - **Claude and you share that browser.** Playwright MCP attaches to it over the Chrome DevTools Protocol (`--cdp-endpoint`), so Claude works in the same tabs and sessions you see.
 - **See and touch the browser from your phone** with noVNC, published only on your private Tailscale network. Solve a captcha, approve a 2FA prompt, log in to a site, then hand it back to Claude.
 - **Locked down by default:** key-only SSH, ufw, fail2ban, unattended security upgrades, no public port besides SSH, and a resource cap so the browser can never starve the server.
+- **Built for flaky phone connections:** every SSH login lands in the same tmux session, so a running Claude survives Termius being suspended and is right there when you reconnect.
 - **`cb`**, a small helper: `cb status`, `cb browser`, `cb restart`, `cb logs`.
 
 ## Demo
@@ -113,7 +114,8 @@ a [Tailscale](https://tailscale.com) account (free plan is fine) and a Claude su
 | `cb browser` | noVNC URL for your phone and the VNC password |
 | `cb restart [xvfb\|chrome\|x11vnc\|novnc]` | Restart everything, or one service |
 | `cb logs [name] [-f]` | Recent logs, of everything or of one service |
-| `sudo bash install.sh --only <step>` | Re-run one step: `system firewall ssh claude browser mcp novnc tailscale cb` |
+| `Ctrl-b d` | Detach from tmux (Claude keeps running; next login reattaches). `touch ~/.no-tmux` disables auto-attach |
+| `sudo bash install.sh --only <step>` | Re-run one step: `system firewall ssh claude shell browser mcp novnc tailscale cb` |
 
 ## Configuration
 

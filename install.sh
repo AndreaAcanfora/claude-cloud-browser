@@ -57,7 +57,7 @@ export CB_USER CB_SSH_PUBKEY CB_COPY_ROOT_KEYS CB_HARDEN_SSH CB_SWAP_GB CB_MEMOR
   CB_CPU_QUOTA CB_DISPLAY CB_SCREEN CB_CDP_PORT CB_VNC_PORT CB_NOVNC_PORT CB_TS_HOSTNAME \
   CB_TS_HTTPS_PORT CB_NODE_VERSION CB_PLAYWRIGHT_VERSION CB_PLAYWRIGHT_MCP_VERSION
 
-STEPS=(system firewall ssh claude browser mcp novnc tailscale cb)
+STEPS=(system firewall ssh claude shell browser mcp novnc tailscale cb)
 
 usage() {
   sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//'
