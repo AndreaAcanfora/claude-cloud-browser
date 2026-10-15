@@ -1,0 +1,146 @@
+#!/usr/bin/env bash
+# cb: day-to-day helper for claude-cloud-browser.
+#
+#   cb status            services, browser endpoint, Tailscale, resource use
+#   cb browser           the noVNC URL to open on your phone (+ VNC password)
+#   cb restart [name]    restart everything, or one of: xvfb chrome x11vnc novnc
+#   cb logs [name] [-f]  recent logs, of everything or of one service
+#
+# Works as the dedicated user or as root (root re-runs it as that user).
+
+set -euo pipefail
+
+# shellcheck disable=SC1091
+[[ -f /etc/claude-cloud-browser/cb.conf ]] && . /etc/claude-cloud-browser/cb.conf
+: "${CB_USER:=claude}" "${CB_CDP_PORT:=9222}" "${CB_NOVNC_PORT:=6080}" "${CB_TS_HTTPS_PORT:=443}"
+
+UNITS=(cb-xvfb cb-chrome cb-x11vnc cb-novnc)
+
+if [[ $(id -un) != "$CB_USER" ]]; then
+  [[ $EUID -eq 0 ]] || { echo "cb: run as $CB_USER or root" >&2; exit 1; }
+  uid=$(id -u "$CB_USER")
+  exec runuser -u "$CB_USER" -- env XDG_RUNTIME_DIR="/run/user/$uid" \
+    DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$uid/bus" "$0" "$@"
+fi
+export XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR:-/run/user/$(id -u)}
+export PATH="$HOME/.local/bin:$HOME/.local/npm/bin:$HOME/.local/node/bin:$PATH"
+
+green() { printf '\033[32m%s\033[0m' "$*"; }
+red()   { printf '\033[31m%s\033[0m' "$*"; }
+
+unit_name() {
+  case ${1:-} in
+    xvfb|chrome|x11vnc|novnc) echo "cb-$1" ;;
+    cb-*) echo "$1" ;;
+    *) echo "cb: unknown service '$1' (xvfb, chrome, x11vnc, novnc)" >&2; exit 1 ;;
+  esac
+}
+
+tailnet_url() {
+  local dns
+  dns=$(tailscale status --json 2>/dev/null | jq -r '.Self.DNSName // empty' | sed 's/\.$//') || true
+  [[ -n $dns ]] || return 1
+  if [[ $CB_TS_HTTPS_PORT == 443 ]]; then
+    echo "https://$dns"
+  else
+    echo "https://$dns:$CB_TS_HTTPS_PORT"
+  fi
+}
+
+cmd_status() {
+  local u state
+  echo "Services"
+  for u in "${UNITS[@]}"; do
+    state=$(systemctl --user is-active "$u" 2>/dev/null || true)
+    if [[ $state == active ]]; then printf '  %-10s %s\n' "$u" "$(green active)"
+    else printf '  %-10s %s\n' "$u" "$(red "${state:-unknown}")"; fi
+  done
+  state=$(systemctl is-active cb-guard 2>/dev/null || true)
+  if [[ $state == active ]]; then printf '  %-10s %s\n' cb-guard "$(green active)"
+  else printf '  %-10s %s\n' cb-guard "$(red "${state:-unknown}")"; fi
+
+  echo "Browser"
+  local version
+  if version=$(curl -fsS -m 3 "http://127.0.0.1:$CB_CDP_PORT/json/version" 2>/dev/null | jq -r '.Browser'); then
+    echo "  DevTools   $(green "$version") on 127.0.0.1:$CB_CDP_PORT"
+  else
+    echo "  DevTools   $(red unreachable) on 127.0.0.1:$CB_CDP_PORT (try: cb restart chrome)"
+  fi
+
+  echo "Tailscale"
+  local backend url
+  backend=$(tailscale status --json 2>/dev/null | jq -r '.BackendState // empty' || true)
+  if [[ $backend == Running ]]; then
+    url=$(tailnet_url || true)
+    echo "  state      $(green connected) as ${url:-?}"
+  else
+    echo "  state      $(red "${backend:-not installed}") (run: sudo tailscale up)"
+  fi
+
+  echo "Resources (whole user, capped)"
+  local slice cur max
+  slice="user-$(id -u).slice"
+  cur=$(systemctl show "$slice" -p MemoryCurrent --value 2>/dev/null || echo 0)
+  max=$(systemctl show "$slice" -p MemoryMax --value 2>/dev/null || echo infinity)
+  printf '  memory     %s MB of %s\n' "$((${cur:-0} / 1048576))" \
+    "$([[ $max =~ ^[0-9]+$ ]] && echo "$((max / 1048576)) MB" || echo "$max")"
+
+  echo "Claude Code"
+  if command -v claude >/dev/null; then
+    echo "  $(claude --version 2>/dev/null | head -1)  (first time: run 'claude' and log in)"
+  else
+    echo "  $(red "not found in PATH")"
+  fi
+}
+
+cmd_browser() {
+  local url pw=""
+  [[ -r $HOME/.vnc/password.txt ]] && pw=$(<"$HOME/.vnc/password.txt")
+  if url=$(tailnet_url); then
+    echo "Open on your phone (Tailscale must be on):"
+    echo
+    echo "  $url/vnc.html?autoconnect=1&resize=scale"
+  else
+    echo "Tailscale is not connected yet. On the server run, as root:"
+    echo "  tailscale up --hostname=claude-vps && bash install.sh --only tailscale"
+    echo
+    echo "Meanwhile, from a computer: ssh -L $CB_NOVNC_PORT:127.0.0.1:$CB_NOVNC_PORT $CB_USER@<server>"
+    echo "  then open http://127.0.0.1:$CB_NOVNC_PORT/vnc.html?autoconnect=1&resize=scale"
+  fi
+  [[ -n $pw ]] && { echo; echo "VNC password: $pw"; }
+}
+
+cmd_restart() {
+  if [[ $# -gt 0 ]]; then
+    systemctl --user restart "$(unit_name "$1")"
+  else
+    systemctl --user restart "${UNITS[@]}"
+  fi
+  cmd_status
+}
+
+cmd_logs() {
+  local args=(-n 100 --no-pager) unit=""
+  for a in "$@"; do
+    case $a in
+      -f|--follow) args=(-n 50 -f) ;;
+      *) unit=$(unit_name "$a") ;;
+    esac
+  done
+  if [[ -n $unit ]]; then
+    journalctl --user -u "$unit" "${args[@]}"
+  else
+    local u filters=()
+    for u in "${UNITS[@]}"; do filters+=(-u "$u"); done
+    journalctl --user "${filters[@]}" "${args[@]}"
+  fi
+}
+
+case ${1:-status} in
+  status) cmd_status ;;
+  browser|url) cmd_browser ;;
+  restart) shift; cmd_restart "$@" ;;
+  logs) shift; cmd_logs "$@" ;;
+  -h|--help|help) sed -n '2,9p' "$0" | sed 's/^# \{0,1\}//' ;;
+  *) echo "cb: unknown command '$1' (cb help)" >&2; exit 1 ;;
+esac
