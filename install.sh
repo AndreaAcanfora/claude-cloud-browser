@@ -49,7 +49,7 @@ load_env_file "$CB_ROOT/.env"
 : "${CB_VNC_PORT:=5900}"
 : "${CB_NOVNC_PORT:=6080}"
 : "${CB_TS_HOSTNAME:=claude-vps}"
-: "${CB_TS_HTTPS_PORT:=443}"
+: "${CB_TS_HTTPS_PORT:=auto}"
 : "${CB_NODE_VERSION:=lts}"
 : "${CB_PLAYWRIGHT_VERSION:=1.64.1}"
 : "${CB_PLAYWRIGHT_MCP_VERSION:=0.0.83}"
@@ -77,6 +77,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 require_root
+resolve_ts_https_port
 # shellcheck disable=SC1091
 . /etc/os-release
 [[ ${ID:-} == ubuntu && ${VERSION_ID:-} == 24.04 ]] ||

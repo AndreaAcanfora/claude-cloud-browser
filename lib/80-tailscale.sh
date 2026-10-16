@@ -28,10 +28,21 @@ step_tailscale() {
   # Lets the dedicated user run `tailscale serve` / `cb browser` without sudo.
   tailscale set --operator="$CB_USER"
 
-  local target="http://127.0.0.1:$CB_NOVNC_PORT"
-  if tailscale serve status --json 2>/dev/null |
-    jq -e --arg t "$target" '[.. | .Proxy? // empty] | index($t)' >/dev/null; then
-    ok "noVNC already published on the tailnet"
+  local target="http://127.0.0.1:$CB_NOVNC_PORT" port published=no
+  # Ports where noVNC is published now (an older install may have used 443).
+  for port in $(tailscale serve status --json 2>/dev/null |
+    jq -r --arg t "$target" '.Web // {} | to_entries[]
+      | select([.value.Handlers[]?.Proxy] | index($t)) | .key | sub(".*:"; "")'); do
+    if [[ $port == "$CB_TS_HTTPS_PORT" ]]; then
+      published=yes
+    else
+      log "moving noVNC off tailnet HTTPS port $port"
+      tailscale serve --https="$port" off
+    fi
+  done
+
+  if [[ $published == yes ]]; then
+    ok "noVNC already published on the tailnet (HTTPS port $CB_TS_HTTPS_PORT)"
   else
     # On a new tailnet, serve waits forever for the admin to enable HTTPS:
     # bound it and show Tailscale's message (it contains the enable link).

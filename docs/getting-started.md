@@ -141,7 +141,8 @@ Then try: `Open example.com and tell me the page title.`
    cb browser
    ```
 
-   It prints an address like `https://claude-vps.<your-tailnet>.ts.net/vnc.html?...` and the **VNC password**.
+   It prints an address like `https://claude-vps.<your-tailnet>.ts.net/vnc.html?...` (with `:8443` after `.ts.net`
+   if the server also runs a website) and the **VNC password**.
    Go back to Claude's window with `Ctrl-b` then `p`.
 2. Make sure the **Tailscale app is on**, then open that address in your phone browser and enter the VNC password.
 3. You see the server's Chrome. Log in to the websites you want Claude to use. Your logins are saved in the browser profile on the server.
@@ -221,6 +222,7 @@ The installer is safe to re-run: it only changes what is out of date.
 | `cb status` shows a service not active | `cb logs <name>` to see why, then `cb restart <name>` |
 | `cb-remote-control` is inactive | You are not logged in to Claude or did not trust `~/workspace`: see step 8. Details: `cb logs remote` |
 | Claude does not list **playwright** in `/mcp` | As root: `bash /opt/claude-cloud-browser/install.sh --only browser,mcp` |
+| A website on the same server (Caddy, nginx) does not start after a reboot | Old installs served noVNC on port 443. Update and re-run the installer as root (step 9): it moves noVNC to port 8443 |
 | A site logs you out or shows a captcha | Open the browser with `cb browser` and solve it by hand, then ask Claude to continue |
 
 Still stuck? [Open an issue](https://github.com/AndreaAcanfora/claude-cloud-browser/issues) with the output of `cb status`.

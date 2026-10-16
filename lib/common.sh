@@ -125,3 +125,23 @@ enable_user_unit() {
     user_systemctl start "$name"
   fi
 }
+
+# resolve_ts_https_port: turn CB_TS_HTTPS_PORT=auto into a port number.
+# tailscaled binds the tailnet IP on the serve port at boot, before most
+# services, so a web server that binds *:443 (Caddy, nginx, ...) would fail
+# to start after the next reboot. Use 443 only when nothing else wants it.
+resolve_ts_https_port() {
+  [[ $CB_TS_HTTPS_PORT == auto ]] || return 0
+  local other=no unit
+  if ss -Hltnp 'sport = :443' 2>/dev/null | grep -v '"tailscaled"' | grep . >/dev/null; then
+    other=yes
+  fi
+  for unit in caddy nginx apache2 httpd haproxy traefik lighttpd; do
+    systemctl is-enabled --quiet "$unit" 2>/dev/null && other=yes
+  done
+  if [[ $other == yes ]]; then
+    CB_TS_HTTPS_PORT=8443
+  else
+    CB_TS_HTTPS_PORT=443
+  fi
+}
