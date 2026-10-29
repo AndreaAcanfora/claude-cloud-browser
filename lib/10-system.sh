@@ -2,7 +2,9 @@
 # Dedicated non-root user, swap, unattended-upgrades, fail2ban, base packages.
 
 step_system() {
-  apt_install ca-certificates curl git xz-utils jq dbus-user-session \
+  # libatomic1: the official Node arm64 binaries link against it, and a
+  # fresh Ubuntu 24.04 cloud image does not ship it.
+  apt_install ca-certificates curl git xz-utils jq dbus-user-session libatomic1 \
     unattended-upgrades fail2ban nftables ufw
 
   ensure_user
