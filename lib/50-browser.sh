@@ -33,6 +33,22 @@ step_browser() {
   enable_user_unit cb-chrome.service "$changed"
 
   wait_for_cdp
+  ensure_chrome_restart_timer
+}
+
+# Nightly browser restart at CB_CHROME_RESTART (HH:MM, server time), or none with "off".
+ensure_chrome_restart_timer() {
+  if [[ $CB_CHROME_RESTART == off ]]; then
+    user_systemctl disable --now --quiet cb-chrome-restart.timer 2>/dev/null || true
+    ok "nightly browser restart: off"
+    return 0
+  fi
+  [[ $CB_CHROME_RESTART =~ ^([01][0-9]|2[0-3]):[0-5][0-9]$ ]] || die "CB_CHROME_RESTART must be HH:MM or off, got: $CB_CHROME_RESTART"
+  install_user_unit cb-chrome-restart.service || true
+  local changed=0
+  install_user_unit cb-chrome-restart.timer && changed=1
+  enable_user_unit cb-chrome-restart.timer "$changed"
+  ok "nightly browser restart at $CB_CHROME_RESTART"
 }
 
 install_google_chrome() {
