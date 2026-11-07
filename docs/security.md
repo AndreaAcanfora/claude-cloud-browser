@@ -12,7 +12,7 @@ Everything below is about keeping that browser reachable only by you and by your
 | Someone on the internet opens noVNC | noVNC listens on `127.0.0.1` only and is published with `tailscale serve` (tailnet only, HTTPS, never Funnel). x11vnc has its own password |
 | Another local user (a web app, a compromised service) attaches to the DevTools port and hijacks the logged-in sessions | The `cb-guard` service loads an nftables table that rejects loopback connections to the CDP, VNC and noVNC ports unless the socket owner is the dedicated user or root |
 | Another local user reads or types into the X display | Xvfb runs with `-nolisten tcp -auth ~/.Xauthority`: only clients holding the user's cookie can connect |
-| The browser or Claude eats all memory and takes down other services | A drop-in on `user-<uid>.slice` caps everything the user runs (`MemoryMax`, `CPUQuota`); swap is raised to at least 4 GB |
+| The browser or Claude eats all memory and takes down other services | A drop-in on `user-<uid>.slice` caps everything the user runs (`MemoryMax`, `MemorySwapMax`, `CPUQuota`), and the browser restarts every night so tabs left open do not pile up; swap is raised to at least 4 GB |
 | Claude Code escalates to root | The dedicated user has no sudo and is not in any admin group; its home is `750` |
 | Unpatched system packages | unattended-upgrades enabled |
 | Browser sandbox disabled to make Chromium start on Ubuntu 24.04 | Not disabled. An AppArmor profile grants unprivileged user namespaces to the Playwright Chromium binary only, so the normal sandbox keeps working |

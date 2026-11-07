@@ -1,0 +1,9 @@
+[Unit]
+Description=claude-cloud-browser: restart the browser every night at @CB_CHROME_RESTART@
+
+[Timer]
+OnCalendar=*-*-* @CB_CHROME_RESTART@:00
+RandomizedDelaySec=5min
+
+[Install]
+WantedBy=timers.target

@@ -131,6 +131,8 @@ or in `/etc/claude-cloud-browser/install.env` (handy for cloud-init). See [`.env
 | `CB_HARDEN_SSH` | `auto` | `auto`/`yes`: key-only SSH once both the user and root have a key. `no`: leave sshd alone |
 | `CB_SWAP_GB` | `4` | Minimum total swap |
 | `CB_MEMORY_MAX` / `CB_CPU_QUOTA` | `3G` / `200%` | Cap for everything the user runs |
+| `CB_MEMORY_SWAP_MAX` | `1G` | Swap that user may fill past `CB_MEMORY_MAX`, so it cannot make the whole server thrash |
+| `CB_CHROME_RESTART` | `04:30` | Nightly browser restart (server time) that closes old tabs and keeps logins; `off` to disable |
 | `CB_TS_HOSTNAME` / `CB_TS_HTTPS_PORT` | `claude-vps` / `auto` | Tailscale name and HTTPS port for noVNC. `auto` is 443, or 8443 if a web server already uses 443 |
 | `CB_PLAYWRIGHT_VERSION` / `CB_PLAYWRIGHT_MCP_VERSION` | pinned | Browser build (ARM64) and MCP server versions |
 | `CB_RC_NAME` / `CB_RC_PERMISSION_MODE` | `CB_TS_HOSTNAME` / `default` | Remote Control session name and permission mode |
