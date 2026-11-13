@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Finto `systemctl --user`: registra le chiamate e risponde da FAKE_*.
+echo "systemctl $*" >>"$FAKE_LOG"
+[[ $1 == --user ]] && shift
+case $1 in
+  is-active) [[ ${FAKE_ACTIVE:-no} == yes ]] ;;
+  show) echo "${FAKE_ACTIVE_SINCE:?}" ;;
+  *) exit 0 ;;
+esac

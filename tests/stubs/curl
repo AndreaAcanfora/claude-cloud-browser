@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Finto `curl` per l'endpoint DevTools: /json/list legge FAKE_TABS,
+# /json/new apre una scheda con un id nuovo e la aggiunge.
+url=${*: -1}
+echo "curl $url" >>"$FAKE_LOG"
+case $url in
+  */json/list) cat "$FAKE_TABS" ;;
+  */json/new\?*)
+    id="tab$(( $(jq length "$FAKE_TABS") + 1 ))"
+    jq --arg id "$id" '. + [{id: $id}]' "$FAKE_TABS" >"$FAKE_TABS.new" && mv "$FAKE_TABS.new" "$FAKE_TABS"
+    printf '{"id":"%s"}\n' "$id" ;;
+  *) exit 7 ;;
+esac
