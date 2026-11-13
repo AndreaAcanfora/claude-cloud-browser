@@ -1,0 +1,16 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Run tests
+        run: tests/run.sh
+      - name: Shellcheck the tests
+        run: shellcheck -x tests/run.sh tests/stubs/*

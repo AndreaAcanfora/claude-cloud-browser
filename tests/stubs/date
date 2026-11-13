@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Finto `date`: senza -d risponde come se fosse FAKE_NOW.
+if [[ ${1:-} == -d || -z ${FAKE_NOW:-} ]]; then exec /usr/bin/date "$@"; fi
+exec /usr/bin/date -d "$FAKE_NOW" "$@"
