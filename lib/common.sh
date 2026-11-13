@@ -103,6 +103,7 @@ render() {
       -e "s|@CB_CPU_QUOTA@|$CB_CPU_QUOTA|g" \
       -e "s|@CB_MEMORY_SWAP_MAX@|$CB_MEMORY_SWAP_MAX|g" \
       -e "s|@CB_CHROME_RESTART@|$CB_CHROME_RESTART|g" \
+      -e "s|@CB_CHROME_MEMORY_HIGH@|$CB_CHROME_MEMORY_HIGH|g" \
       -e "s|@CB_RC_NAME@|$CB_RC_NAME|g" \
       -e "s|@CB_RC_PERMISSION_MODE@|$CB_RC_PERMISSION_MODE|g" \
       "$1"
