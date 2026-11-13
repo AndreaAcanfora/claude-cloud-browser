@@ -113,7 +113,8 @@ EOF
   fi
 }
 
-# Managed policy, read by Google Chrome and Chromium alike. With
+# Managed policy, for Google Chrome, Chrome for Testing (Playwright builds)
+# and Chromium. With
 # CB_BROWSER_EXTENSIONS=block (default) no extension can run, and Chrome Sync
 # stops bringing back the ones installed in the user's Google account: each
 # one costs a process and a service worker. Gemini in Chrome is off as well.
@@ -121,7 +122,7 @@ ensure_browser_policy() {
   local dir changed=0
   case $CB_BROWSER_EXTENSIONS in
     block)
-      for dir in /etc/opt/chrome/policies/managed /etc/chromium/policies/managed; do
+      for dir in /etc/opt/chrome/policies/managed /etc/opt/chrome_for_testing/policies/managed /etc/chromium/policies/managed; do
         ensure_file "$dir/claude-cloud-browser.json" 644 root:root <<'JSON' && changed=1
 {
   "ExtensionInstallBlocklist": ["*"],
@@ -134,7 +135,7 @@ JSON
       ok "browser policy: extensions blocked"
       ;;
     allow)
-      for dir in /etc/opt/chrome/policies/managed /etc/chromium/policies/managed; do
+      for dir in /etc/opt/chrome/policies/managed /etc/opt/chrome_for_testing/policies/managed /etc/chromium/policies/managed; do
         if [[ -f $dir/claude-cloud-browser.json ]]; then
           rm -f "$dir/claude-cloud-browser.json"
           changed=1
