@@ -5,4 +5,5 @@ Description=claude-cloud-browser: nightly browser restart (closes old tabs, keep
 Type=oneshot
 # Tabs left open for days are what fills memory. The profile keeps cookies
 # and logins, so a restart only closes tabs.
-ExecStart=/usr/bin/systemctl --user restart cb-chrome.service
+# try-restart: a browser stopped for being idle stays stopped.
+ExecStart=/usr/bin/systemctl --user try-restart cb-chrome.service

@@ -9,6 +9,8 @@ step_novnc() {
   ensure_vnc_password
   ensure_port_guard
 
+  [[ $CB_CHROME_IDLE_STOP == off ]] && remove_wake_units
+
   local changed=0
   install_user_unit cb-x11vnc.service && changed=1
   enable_user_unit cb-x11vnc.service "$changed"

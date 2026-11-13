@@ -5,8 +5,10 @@
 | Component | Runs as | Listens on | Started by |
 |---|---|---|---|
 | `cb-xvfb` | `claude` (systemd user unit) | X display `:99`, unix socket only | user systemd (lingering) |
-| `cb-chrome` | `claude` | DevTools `127.0.0.1:9222` | user systemd, after `cb-xvfb` |
-| `cb-x11vnc` | `claude` | `127.0.0.1:5900` | user systemd, after `cb-xvfb` |
+| `cb-chrome` | `claude` | DevTools `127.0.0.1:9222` (`:9223` with `CB_CHROME_IDLE_STOP`) | user systemd, after `cb-xvfb`; on demand with `CB_CHROME_IDLE_STOP` |
+| `cb-x11vnc` | `claude` | `127.0.0.1:5900` (`:5901` with `CB_CHROME_IDLE_STOP`) | user systemd, after `cb-xvfb` |
+| `cb-cdp.socket` / `cb-vnc.socket` + `cb-wake-proxy` | `claude` | `127.0.0.1:9222` / `:5900` | only with `CB_CHROME_IDLE_STOP`: the first connection starts the browser, each use is recorded |
+| `cb-idle.timer` | `claude` | none | every minute: stops the unused browser, keeps it up in `CB_CHROME_KEEP_AWAKE` hours |
 | `cb-novnc` (websockify + noVNC) | `claude` | `127.0.0.1:6080` | user systemd, after `cb-x11vnc` |
 | `cb-remote-control` | `claude` | outbound only (Anthropic) | user systemd, after `cb-chrome`; skipped until logged in + `~/workspace` trusted |
 | `cb-guard` | root (system unit) | nftables table `inet claude_cloud_browser` | system systemd |

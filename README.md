@@ -135,6 +135,10 @@ or in `/etc/claude-cloud-browser/install.env` (handy for cloud-init). See [`.env
 | `CB_CHROME_RESTART` | `04:30` | Nightly browser restart (server time) that closes old tabs and keeps logins; `off` to disable |
 | `CB_CHROME_MEMORY_HIGH` | `2G` | Browser memory above which the kernel reclaims from it first |
 | `CB_BROWSER_EXTENSIONS` | `block` | `block` disables every extension (Chrome Sync cannot bring them back) and Gemini in Chrome; `allow` to keep them |
+| `CB_CHROME_IDLE_STOP` | `off` | Minutes without use after which the browser stops; it starts again on the next DevTools or noVNC connection (2-3 s). Logins are kept |
+| `CB_CHROME_KEEP_AWAKE` | | Hours when the browser stays up anyway, `;`-separated: `Mon..Fri 07:00-18:00` |
+| `CB_CHROME_KEEP_AWAKE_URLS` | | Pages kept open during those hours (space-separated), e.g. `https://app.slack.com/client` |
+| `CB_TIMEZONE` | server time | Time zone of `CB_CHROME_KEEP_AWAKE`, e.g. `Europe/Rome` |
 | `CB_TS_HOSTNAME` / `CB_TS_HTTPS_PORT` | `claude-vps` / `auto` | Tailscale name and HTTPS port for noVNC. `auto` is 443, or 8443 if a web server already uses 443 |
 | `CB_PLAYWRIGHT_VERSION` / `CB_PLAYWRIGHT_MCP_VERSION` | pinned | Browser build (ARM64) and MCP server versions |
 | `CB_RC_NAME` / `CB_RC_PERMISSION_MODE` | `CB_TS_HOSTNAME` / `default` | Remote Control session name and permission mode |

@@ -1,0 +1,93 @@
+#!/usr/bin/env python3
+"""cb-wake-proxy: socket-activated TCP proxy in front of the browser.
+
+systemd listens on the public local port (DevTools or VNC) and starts this
+proxy on the first connection; the proxy unit requires cb-chrome.service, so
+that connection is what wakes the browser up. Every byte a client sends is
+"use": the proxy touches STAMP_FILE, and cb-idle stops the browser once that
+file is older than CB_CHROME_IDLE_STOP minutes. Bytes coming back from the
+browser (page events, screen updates) do not count, so an idle tab with a
+client still attached is still idle.
+
+Usage: cb-wake-proxy BACKEND_PORT STAMP_FILE  (run by systemd, fd 3 = socket)
+"""
+
+import asyncio
+import os
+import socket
+import sys
+import time
+
+BACKEND_HOST = "127.0.0.1"
+BACKEND_PORT = int(sys.argv[1])
+STAMP_FILE = sys.argv[2]
+# The browser needs a moment after a cold start before its port opens.
+BACKEND_WAIT_SECONDS = 30
+STAMP_EVERY_SECONDS = 5
+
+_last_stamp = 0.0
+
+
+def mark_used() -> None:
+    global _last_stamp
+    now = time.monotonic()
+    if now - _last_stamp < STAMP_EVERY_SECONDS:
+        return
+    _last_stamp = now
+    try:
+        os.utime(STAMP_FILE)
+    except FileNotFoundError:
+        with open(STAMP_FILE, "a", encoding="utf-8"):
+            pass
+
+
+async def open_backend():
+    deadline = time.monotonic() + BACKEND_WAIT_SECONDS
+    while True:
+        try:
+            return await asyncio.open_connection(BACKEND_HOST, BACKEND_PORT)
+        except OSError:
+            if time.monotonic() > deadline:
+                raise
+            await asyncio.sleep(0.25)
+
+
+async def pipe(reader, writer, counts_as_use: bool) -> None:
+    try:
+        while data := await reader.read(65536):
+            if counts_as_use:
+                mark_used()
+            writer.write(data)
+            await writer.drain()
+    except OSError:
+        pass
+    finally:
+        writer.close()
+
+
+async def handle(client_reader, client_writer) -> None:
+    mark_used()
+    try:
+        backend_reader, backend_writer = await open_backend()
+    except OSError:
+        print(f"backend 127.0.0.1:{BACKEND_PORT} did not come up", file=sys.stderr, flush=True)
+        client_writer.close()
+        return
+    await asyncio.gather(
+        pipe(client_reader, backend_writer, True),
+        pipe(backend_reader, client_writer, False),
+    )
+
+
+async def main() -> None:
+    if os.environ.get("LISTEN_FDS") != "1":
+        sys.exit("cb-wake-proxy: expected exactly one socket from systemd (LISTEN_FDS=1)")
+    listener = socket.socket(fileno=3)
+    listener.setblocking(False)
+    server = await asyncio.start_server(handle, sock=listener)
+    async with server:
+        await server.serve_forever()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

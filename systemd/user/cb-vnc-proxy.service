@@ -1,0 +1,8 @@
+[Unit]
+Description=claude-cloud-browser: VNC proxy to x11vnc on 127.0.0.1:@CB_VNC_BACKEND_PORT@
+# Opening noVNC wakes the browser, so you never look at an empty screen.
+Requires=cb-chrome.service cb-x11vnc.service cb-vnc.socket
+After=cb-chrome.service cb-x11vnc.service cb-vnc.socket
+
+[Service]
+ExecStart=/usr/bin/python3 /usr/local/lib/claude-cloud-browser/cb-wake-proxy @CB_VNC_BACKEND_PORT@ %t/cb-activity

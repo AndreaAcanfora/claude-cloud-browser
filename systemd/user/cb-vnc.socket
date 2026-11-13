@@ -1,0 +1,9 @@
+[Unit]
+Description=claude-cloud-browser: VNC on 127.0.0.1:@CB_VNC_PORT@ (wakes the browser on first use)
+
+[Socket]
+ListenStream=127.0.0.1:@CB_VNC_PORT@
+Service=cb-vnc-proxy.service
+
+[Install]
+WantedBy=sockets.target

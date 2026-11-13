@@ -1,0 +1,9 @@
+[Unit]
+Description=claude-cloud-browser: DevTools on 127.0.0.1:@CB_CDP_PORT@ (wakes the browser on first use)
+
+[Socket]
+ListenStream=127.0.0.1:@CB_CDP_PORT@
+Service=cb-cdp-proxy.service
+
+[Install]
+WantedBy=sockets.target
