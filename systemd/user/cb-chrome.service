@@ -8,6 +8,8 @@ Environment=DISPLAY=@CB_DISPLAY@
 Environment=XAUTHORITY=@CB_HOME@/.Xauthority
 # The profile in --user-data-dir keeps cookies and logins across restarts.
 # Playwright MCP attaches to this same browser through the DevTools port.
+# A few renderer processes are shared by all tabs, and features a server
+# browser never needs (Gemini panel, translate, casting, hint downloads) are off.
 ExecStart=@CB_HOME@/.local/bin/cb-browser \
   --user-data-dir=@CB_HOME@/.config/cb-chrome \
   --remote-debugging-address=127.0.0.1 \
@@ -18,11 +20,16 @@ ExecStart=@CB_HOME@/.local/bin/cb-browser \
   --disable-dev-shm-usage \
   --window-position=0,0 \
   --window-size=@CB_WINDOW_SIZE@ \
+  --renderer-process-limit=4 \
+  --disable-features=Glic,GlicActor,OptimizationHints,OptimizationHintsFetching,Translate,MediaRouter,DialMediaRouteProvider,InterestFeedContentSuggestions \
   about:blank
 Restart=always
 RestartSec=3
 # Chrome forks many processes; give it time to close cleanly so the profile is not corrupted.
 TimeoutStopSec=20
+# Above this the kernel reclaims the browser's memory first, before the
+# user-wide MemoryMax and long before the rest of the server feels it.
+MemoryHigh=@CB_CHROME_MEMORY_HIGH@
 
 [Install]
 WantedBy=default.target

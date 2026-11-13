@@ -21,6 +21,7 @@ step_browser() {
   runuser -u "$CB_USER" -- ln -sfn "$bin" "$home/.local/bin/cb-browser"
   ok "browser: $bin"
 
+  ensure_browser_policy
   ensure_xauthority
   ensure_user_slice_limits
 
@@ -110,6 +111,43 @@ profile claude-cloud-browser-chromium $(cb_home)/.cache/ms-playwright/chromium-*
 EOF
     apparmor_parser -r /etc/apparmor.d/claude-cloud-browser-chromium
   fi
+}
+
+# Managed policy, read by Google Chrome and Chromium alike. With
+# CB_BROWSER_EXTENSIONS=block (default) no extension can run, and Chrome Sync
+# stops bringing back the ones installed in the user's Google account: each
+# one costs a process and a service worker. Gemini in Chrome is off as well.
+ensure_browser_policy() {
+  local dir changed=0
+  case $CB_BROWSER_EXTENSIONS in
+    block)
+      for dir in /etc/opt/chrome/policies/managed /etc/chromium/policies/managed; do
+        ensure_file "$dir/claude-cloud-browser.json" 644 root:root <<'JSON' && changed=1
+{
+  "ExtensionInstallBlocklist": ["*"],
+  "SyncTypesListDisabled": ["extensions", "apps"],
+  "GeminiSettings": 1,
+  "BackgroundModeEnabled": false
+}
+JSON
+      done
+      ok "browser policy: extensions blocked"
+      ;;
+    allow)
+      for dir in /etc/opt/chrome/policies/managed /etc/chromium/policies/managed; do
+        if [[ -f $dir/claude-cloud-browser.json ]]; then
+          rm -f "$dir/claude-cloud-browser.json"
+          changed=1
+        fi
+      done
+      ok "browser policy: extensions allowed"
+      ;;
+    *) die "CB_BROWSER_EXTENSIONS must be block or allow, got: $CB_BROWSER_EXTENSIONS" ;;
+  esac
+  if [[ $changed == 1 ]] && user_systemctl is-active --quiet cb-chrome.service 2>/dev/null; then
+    user_systemctl restart cb-chrome.service
+  fi
+  return 0
 }
 
 # Xvfb only accepts clients that hold this cookie, so other local users can
