@@ -97,7 +97,11 @@ render() {
       -e "s|@CB_SCREEN@|$CB_SCREEN|g" \
       -e "s|@CB_WINDOW_SIZE@|$(cut -dx -f1,2 <<<"$CB_SCREEN" | tr x ,)|g" \
       -e "s|@CB_CDP_PORT@|$CB_CDP_PORT|g" \
+      -e "s|@CB_CDP_BACKEND_PORT@|$CB_CDP_BACKEND_PORT|g" \
+      -e "s|@CB_CHROME_CDP_PORT@|$CB_CHROME_CDP_PORT|g" \
       -e "s|@CB_VNC_PORT@|$CB_VNC_PORT|g" \
+      -e "s|@CB_VNC_BACKEND_PORT@|$CB_VNC_BACKEND_PORT|g" \
+      -e "s|@CB_X11VNC_PORT@|$CB_X11VNC_PORT|g" \
       -e "s|@CB_NOVNC_PORT@|$CB_NOVNC_PORT|g" \
       -e "s|@CB_MEMORY_MAX@|$CB_MEMORY_MAX|g" \
       -e "s|@CB_CPU_QUOTA@|$CB_CPU_QUOTA|g" \
@@ -127,6 +131,20 @@ enable_user_unit() {
   elif ! user_systemctl is-active --quiet "$name"; then
     user_systemctl start "$name"
   fi
+}
+
+# remove_wake_units: drop the on-demand sockets (CB_CHROME_IDLE_STOP=off) so
+# the browser and x11vnc can listen on the usual ports again.
+remove_wake_units() {
+  local home u removed=0
+  home=$(cb_home)
+  for u in cb-cdp.socket cb-vnc.socket cb-cdp-proxy.service cb-vnc-proxy.service; do
+    [[ -f $home/.config/systemd/user/$u ]] || continue
+    user_systemctl disable --now --quiet "$u" 2>/dev/null || true
+    rm -f "$home/.config/systemd/user/$u"
+    removed=1
+  done
+  [[ $removed == 0 ]] || user_systemctl daemon-reload
 }
 
 # resolve_ts_https_port: turn CB_TS_HTTPS_PORT=auto into a port number.

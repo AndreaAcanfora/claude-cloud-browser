@@ -1,0 +1,9 @@
+[Unit]
+Description=claude-cloud-browser: check browser use every minute
+
+[Timer]
+OnCalendar=*-*-* *:*:00
+AccuracySec=5s
+
+[Install]
+WantedBy=timers.target

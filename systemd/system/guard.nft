@@ -11,6 +11,6 @@ delete table inet claude_cloud_browser
 table inet claude_cloud_browser {
   chain output {
     type filter hook output priority 0; policy accept;
-    oifname "lo" tcp dport { @CB_CDP_PORT@, @CB_VNC_PORT@, @CB_NOVNC_PORT@ } meta skuid != { 0, @CB_UID@ } reject with tcp reset
+    oifname "lo" tcp dport { @CB_CDP_PORT@, @CB_CDP_BACKEND_PORT@, @CB_VNC_PORT@, @CB_VNC_BACKEND_PORT@, @CB_NOVNC_PORT@ } meta skuid != { 0, @CB_UID@ } reject with tcp reset
   }
 }

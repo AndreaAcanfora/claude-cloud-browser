@@ -4,7 +4,8 @@
 #   cb status            services, browser endpoint, Tailscale, resource use
 #   cb browser           the noVNC URL to open on your phone (+ VNC password)
 #   cb restart [name]    restart everything, or one of: xvfb chrome x11vnc novnc remote
-#   cb logs [name] [-f]  recent logs, of everything or of one service
+#   cb wake              start the browser now (when it stops on idle)
+#   cb logs [name] [-f]  recent logs, of everything or of one service (also: idle)
 #
 # Works as the dedicated user or as root (root re-runs it as that user).
 
@@ -32,8 +33,9 @@ unit_name() {
   case ${1:-} in
     xvfb|chrome|x11vnc|novnc) echo "cb-$1" ;;
     remote|rc|remote-control) echo cb-remote-control ;;
+    idle) echo cb-idle ;;
     cb-*) echo "$1" ;;
-    *) echo "cb: unknown service '$1' (xvfb, chrome, x11vnc, novnc, remote)" >&2; exit 1 ;;
+    *) echo "cb: unknown service '$1' (xvfb, chrome, x11vnc, novnc, remote, idle)" >&2; exit 1 ;;
   esac
 }
 
@@ -48,12 +50,19 @@ tailnet_url() {
   fi
 }
 
+# The browser stops on idle when systemd holds its DevTools port (cb-cdp.socket).
+on_demand() {
+  systemctl --user is-active --quiet cb-cdp.socket 2>/dev/null
+}
+
 cmd_status() {
   local u state
   echo "Services"
   for u in "${UNITS[@]}"; do
     state=$(systemctl --user is-active "$u" 2>/dev/null || true)
     if [[ $state == active ]]; then printf '  %-17s %s\n' "$u" "$(green active)"
+    elif [[ $u == cb-chrome ]] && on_demand; then
+      printf '  %-17s %s\n' "$u" "$(green asleep) (stopped while unused, starts on the next connection)"
     elif [[ $u == cb-remote-control ]]; then
       printf '  %-17s %s\n' "$u" "$(red "${state:-inactive}") (needs: claude login + trust ~/workspace, see docs)"
     else printf '  %-17s %s\n' "$u" "$(red "${state:-unknown}")"; fi
@@ -64,7 +73,9 @@ cmd_status() {
 
   echo "Browser"
   local version
-  if version=$(curl -fsS -m 3 "http://127.0.0.1:$CB_CDP_PORT/json/version" 2>/dev/null | jq -r '.Browser'); then
+  if on_demand && ! systemctl --user is-active --quiet cb-chrome; then
+    echo "  DevTools   $(green asleep) on 127.0.0.1:$CB_CDP_PORT (wakes on connect, or: cb wake)"
+  elif version=$(curl -fsS -m 3 "http://127.0.0.1:$CB_CDP_PORT/json/version" 2>/dev/null | jq -r '.Browser'); then
     echo "  DevTools   $(green "$version") on 127.0.0.1:$CB_CDP_PORT"
   else
     echo "  DevTools   $(red unreachable) on 127.0.0.1:$CB_CDP_PORT (try: cb restart chrome)"
@@ -143,7 +154,8 @@ case ${1:-status} in
   status) cmd_status ;;
   browser|url) cmd_browser ;;
   restart) shift; cmd_restart "$@" ;;
+  wake) systemctl --user start cb-chrome.service && cmd_status ;;
   logs) shift; cmd_logs "$@" ;;
-  -h|--help|help) sed -n '2,9p' "$0" | sed 's/^# \{0,1\}//' ;;
+  -h|--help|help) sed -n '2,10p' "$0" | sed 's/^# \{0,1\}//' ;;
   *) echo "cb: unknown command '$1' (cb help)" >&2; exit 1 ;;
 esac

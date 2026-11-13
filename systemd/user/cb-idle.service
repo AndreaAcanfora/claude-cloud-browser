@@ -1,0 +1,6 @@
+[Unit]
+Description=claude-cloud-browser: stop the browser when unused, keep it up in keep-awake hours
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/lib/claude-cloud-browser/cb-idle

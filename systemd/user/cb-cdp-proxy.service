@@ -1,0 +1,9 @@
+[Unit]
+Description=claude-cloud-browser: DevTools proxy to the browser on 127.0.0.1:@CB_CDP_BACKEND_PORT@
+# Starting this (first connection on the socket) starts the browser;
+# stopping the browser (cb-idle) stops this too, the socket keeps listening.
+Requires=cb-chrome.service cb-cdp.socket
+After=cb-chrome.service cb-cdp.socket
+
+[Service]
+ExecStart=/usr/bin/python3 /usr/local/lib/claude-cloud-browser/cb-wake-proxy @CB_CDP_BACKEND_PORT@ %t/cb-activity

@@ -25,6 +25,9 @@ step_browser() {
   ensure_xauthority
   ensure_user_slice_limits
 
+  # Switching CB_CHROME_IDLE_STOP off: free the DevTools port first.
+  [[ $CB_CHROME_IDLE_STOP == off ]] && remove_wake_units
+
   local changed=0
   install_user_unit cb-xvfb.service && changed=1
   enable_user_unit cb-xvfb.service "$changed"
@@ -176,8 +179,8 @@ ensure_user_slice_limits() {
 wait_for_cdp() {
 
   for _ in $(seq 1 30); do
-    if as_user curl -fsS "http://127.0.0.1:$CB_CDP_PORT/json/version" >/dev/null 2>&1; then
-      ok "DevTools endpoint up on 127.0.0.1:$CB_CDP_PORT"
+    if as_user curl -fsS "http://127.0.0.1:$CB_CHROME_CDP_PORT/json/version" >/dev/null 2>&1; then
+      ok "DevTools endpoint up on 127.0.0.1:$CB_CHROME_CDP_PORT"
       return 0
     fi
     sleep 1

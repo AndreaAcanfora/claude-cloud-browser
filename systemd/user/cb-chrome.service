@@ -1,5 +1,5 @@
 [Unit]
-Description=claude-cloud-browser: always-on browser (DevTools on 127.0.0.1:@CB_CDP_PORT@)
+Description=claude-cloud-browser: browser (DevTools on 127.0.0.1:@CB_CHROME_CDP_PORT@)
 After=cb-xvfb.service
 Requires=cb-xvfb.service
 
@@ -13,7 +13,7 @@ Environment=XAUTHORITY=@CB_HOME@/.Xauthority
 ExecStart=@CB_HOME@/.local/bin/cb-browser \
   --user-data-dir=@CB_HOME@/.config/cb-chrome \
   --remote-debugging-address=127.0.0.1 \
-  --remote-debugging-port=@CB_CDP_PORT@ \
+  --remote-debugging-port=@CB_CHROME_CDP_PORT@ \
   --no-first-run \
   --no-default-browser-check \
   --password-store=basic \
